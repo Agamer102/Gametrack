@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Library{% endblock %}</h1>
+  {% for message in get_flashed_messages() %}
+    <span class="flash">{{ message }}</span>
+  {% endfor %}
+{% endblock %}
+
+
+{% block content %}
+  
+{% if library %}
+<table>
+  <tr>
+      <th>Name</th>
+      <th>steam_appid</th>
+      <th>vndbid</th>
+      <th>type</th>
+      <th>route</th>
+      <th>rating</th>
+      <th>time</th>
+  </tr>
+    {% for entry in library %}
+        <tr>
+            <td>{{ entry.name }}</td>
+            <td>{{ entry.steam_appid }}</td>
+            <td>{{ entry.vndbid }}</td>
+            <td>{{ entry.type }}</td>
+            <td>{{ entry.route }}</td>
+            <td>{{ entry.rating }}</td>
+            <td>{{ entry.time }}</td>
+        </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+
+
+{% endblock %}

@@ -1,0 +1,33 @@
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS games;
+DROP TABLE IF EXISTS images;
+DROP TABLE IF EXISTS library;
+
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL
+);
+
+CREATE TABLE games (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  steam_appid INTEGER,
+  vndbid INTEGER
+);
+
+CREATE TABLE images (
+  game_id INTEGER,
+  type TEXT NOT NULL,
+  route TEXT NOT NULL,
+  FOREIGN KEY (game_id) REFERENCES games(id)
+);
+
+CREATE TABLE library (
+  user_id INTEGER NOT NULL,
+  game_id INTEGER NOT NULL,
+  rating REAL,
+  time INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (game_id) REFERENCES games(id)
+);

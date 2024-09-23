@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Log In{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      let errorArray = [];
+      {% for message in get_flashed_messages() %}
+        errorArray.push({{ message | safe }});
+      {% endfor %}
+
+      if (errorArray.length != 0) {
+        registerE(errorArray);
+    }
+  })
+</script>
+
+<div class="container">
+  <form method="post" class="needs-validation" id="register" novalidate>
+      <div data-mdb-input-init class="form-outline mb-4">
+        <label for="username" class="form-label">Username</label>
+        <input name="username" id="username" class="form-control" required>
+        <div class="invalid-feedback" id="username_error"></div>
+      </div>
+      <div data-mdb-input-init class="form-outline mb-4">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" name="password" id="password" class="form-control" required>
+        <div class="invalid-feedback" id="password_error"></div>
+      </div>
+      <div data-mdb-input-init class="form-outline mb-4">
+        <label for="confirm" class="form-label">Password (again)</label>
+        <input type="password" name="confirmPassword" id="confirmPassword" class="form-control" required>
+        <div class="invalid-feedback" id="confirmPassword_error"></div>
+      </div>
+    <button type="submit" class="btn btn-primary">Register</button>
+  </form>
+</div>
+
+{% endblock %}

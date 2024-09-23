@@ -1,0 +1,34 @@
+nav .navbar-brand
+{
+    font-size: xx-large;
+}
+
+/* Colors for brand */
+nav .navbar-brand .blue
+{
+    color: #537fbe;
+}
+
+.flash 
+{
+    margin: 1em 0;
+    padding: 1em;
+    background: #002438;
+    border: 1px solid #377ba8; 
+}
+
+/* For Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* For Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.nav-link {
+    cursor: pointer;
+}

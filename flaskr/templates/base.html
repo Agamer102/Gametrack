@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gametrack {% block title %}{% endblock %}</title>
+    <link href="{{ url_for('static', filename='bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css')}}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js')}}"></script>
+    <script src="{{ url_for('static', filename='script.js')}}"></script>
+  </head>
+  <body data-bs-theme="dark">
+    <nav class="bg-dark border navbar navbar-expand-md navbar-dark">
+      <div class="container-fluid">
+          <a class="navbar-brand" href="/"><span class="blue"><span class="blue">Gametrack</span></a>
+          <button aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-bs-target="#navbar" data-bs-toggle="collapse" type="button">
+              <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbar">
+              {% if g.user %}
+                  <ul class="navbar-nav me-auto mt-2">
+                      <li class="nav-item"><a class="nav-link" href="{{ url_for('library.library')}} ">Library</a></li>
+                      <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#addGame">Add Game</a></li>
+                      <li class="nav-item"><a class="nav-link" href="/buy">Link Steam</a></li>
+                      <li class="nav-item"><a class="nav-link" href="/sell">Link VNDB</a></li>
+                  </ul>
+                  <ul class="navbar-nav ms-auto mt-2">
+                      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a></li>
+                  </ul>
+              {% else %}
+                  <ul class="navbar-nav ms-auto mt-2">
+                      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Register</a></li>
+                      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Log In</a></li>
+                  </ul>
+              {% endif %}
+          </div>
+      </div>
+  </nav>
+  {% if g.user %}
+  <div class="modal fade" id="addGame" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <select id="inputType" class="form-select" required>
+                  <option value="" disabled selected="true">Add game via:</option>
+                  <option value="name">Name</option>
+                  <option value="steam_appid">Steam AppID</option>
+                  <option value="vndbid">VNDB ID</option>
+              </select>
+          </div>
+          <div class="modal-body" id="addGameFormDiv">
+              <form method="post" class="needs-validation" id="addGameForm" action="{{ url_for('library.library') }}" novalidate>
+                  <div class="mb-3" id="nameField" data-mdb-input-init>
+                      <label class="col-form-label">Name:</label>
+                      <input type="text" class="form-control" name="id">
+                      <div class="invalid-feedback" id="name_error">Please enter the name.</div>
+                  </div>
+                  <div class="mb-3" id="steamAppidField" data-mdb-input-init>
+                      <label class="col-form-label">Steam AppID:</label>
+                      <input type="number" class="form-control" name="id">
+                      <div class="invalid-feedback" id="steam_appid_error">Invalid Steam AppID.</div>
+                  </div>
+                  <div class="mb-3" id="vndbidField" data-mdb-input-init>
+                      <label class="col-form-label">VNDB ID:</label>
+                      <input type="number" class="form-control" name="id">
+                      <div class="invalid-feedback" id="vndbid_error">Invalid VNDB ID.</div>
+                  </div>
+                  <div class="mb-3" data-mdb-input-init>
+                      <label class="col-form-label">Time played (in minutes):</label>
+                      <input type="number" class="form-control" name="time" value=0 required="true">
+                      <div class="invalid-feedback" id="time_error">Time should be a number.</div>
+                  </div>
+                  <div class="mb-3" data-mdb-input-init>
+                      <label class="col-form-label">Rating (optional):</label>
+                      <input type="number" class="form-control" name="rating">
+                      <div class="invalid-feedback" id="rarting_error">Rating should be a number.</div>
+                  </div>
+                  <input type="hidden" id="selectVal" name="select_val" required>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" form="addGameForm" class="btn btn-primary">Add</button>
+          </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('inputType').addEventListener('change', updateFields);
+    document.getElementById('addGame').addEventListener('show.bs.modal', updateFields);
+
+    (() => {
+  'use strict'
+
+  // Fetch all the forms we want to apply custom Bootstrap validation styles to
+  const forms = document.querySelectorAll('.needs-validation')
+
+  // Loop over them and prevent submission
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+  {% endif %}
+
+
+    {% block content %}{% endblock %}
+  </body>
+</html>
