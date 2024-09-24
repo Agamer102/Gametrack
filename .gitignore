@@ -1,5 +1,5 @@
 /.coverage
 /.pytest_cache
 .venv/
-instance/flaskr.sqlite
+instance/
 **/__pycache__/
