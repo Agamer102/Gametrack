@@ -1,26 +1,19 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS games;
-DROP TABLE IF EXISTS images;
 DROP TABLE IF EXISTS library;
 
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
+  password TEXT NOT NULL,
+  steam_id INTEGER
 );
 
 CREATE TABLE games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
-  steam_appid INTEGER,
+  steam_appid INTEGER UNIQUE,
   vndbid INTEGER
-);
-
-CREATE TABLE images (
-  game_id INTEGER,
-  type TEXT NOT NULL,
-  route TEXT NOT NULL,
-  FOREIGN KEY (game_id) REFERENCES games(id)
 );
 
 CREATE TABLE library (

@@ -8,11 +8,6 @@ VALUES
   ('Aokana - Four Rhythms Across the Blue', 1044620, 12849),
   ('Sabbat of the Witch',888790, 16044);
 
-INSERT INTO images (game_id, type, route)
-VALUES
-  (1, 'steam_header.jpg', 'https://steamcdn-a.akamaihd.net/steam/apps/1044620/header.jpg'),
-  (1, 'steam_library_hero.jpg', 'https://steamcdn-a.akamaihd.net/steam/apps/1044620/library_hero.jpg');
-
 INSERT INTO library (user_id, game_id, rating, time)
 VALUES
   (1, 1, NULL, 1440),

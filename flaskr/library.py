@@ -15,10 +15,9 @@ bp = Blueprint('library', __name__)
 def library():
     db = get_db()
     library = db.execute(
-        'SELECT name, steam_appid, vndbid, type, route, rating, time '
+        'SELECT name, steam_appid, vndbid, rating, time '
         ' FROM library '
         '  JOIN games ON library.game_id = games.id '
-        '  LEFT JOIN images ON library.game_id = images.game_id '
         ' WHERE library.user_id = ?',
         (g.user['id'],)
     ).fetchall()
@@ -66,7 +65,6 @@ def library():
                     ' VALUES (?, ?, ?, ?)',
                     (g.user['id'], game_id, rating, time)
                 )
-                print('executed name')
                 db.commit()
             elif input_type == 'steam_appid':
                 game = request_game(str(id))
@@ -88,7 +86,6 @@ def library():
                     ' VALUES (?, ?, ?, ?)',
                     (g.user['id'], game_id, rating, time)
                     )
-                    print('executed')
                     db.commit()
             else:
                 flash('Unsupported selection.')
