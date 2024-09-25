@@ -9,27 +9,28 @@
 
 
 {% block content %}
-  
 {% if library %}
-<div class="game-library">
+<div class="row row-cols-1 row-cols-md-6 g-4">
   {% for entry in library %}
   {% if entry.removed == 0 %}
-  <div class="game-item">
-    <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ entry.steam_appid }}/library_600x900_2x.jpg" alt="">
-    <p>{{ entry.name }}</p>
-    <p>Playtime: {{ entry.time//60 }}H {{ entry.time%60 }}M</p>
-    <p>Rating: {{ entry.rating }}</p>
-    <form action="/update">
-      <input type="hidden" id="game_id" name="game_id" value="{{ entry.game_id }}">
-      <button type="submit" class="btn btn-secondary">Update</button>
-    </form>
-  </div>
+    <div class="col">
+      <div class="card" id="{{ entry.game_id }}">
+        <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ entry.steam_appid }}/library_600x900_2x.jpg" class="card-img-top" alt="" id="img{{ entry.game_id }}">
+        <div class="card-body">
+          <h5 class="card-title" id="name{{ entry.game_id }}">{{ entry.name }}</h5>
+          <p class="card-text">Playtime: {{ entry.time//60 }}H {{ entry.time%60 }}M</p>
+          <p class="card-text">Rating: {{ entry.rating }}</p>
+        </div>
+      </div>
+    </div>
   {% endif %}
   {% endfor %}
 </div>
 
+<script>
+  //code for handling this mess
+</script>
+
+
 {% endif %}
-
-
-
 {% endblock %}

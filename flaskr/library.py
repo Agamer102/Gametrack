@@ -110,8 +110,9 @@ def update():
         (g.user['id'], game_id)
     ).fetchone()
 
-    if len(game) != 1:
+    if game == None:
         return redirect(url_for('library.library'))
 
-    game = list(map(dict, library))[0]
-    return render_template('update.html', game=game)
+    game = dict(game)
+    print(game)
+    return render_template('library/update.html', game=game)

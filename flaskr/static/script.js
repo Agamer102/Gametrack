@@ -76,4 +76,3 @@ function updateFields() {
   document.getElementById('addGameFormDiv').style.display = selectedValue === '' ? 'none' : 'block';
 
 }
-
