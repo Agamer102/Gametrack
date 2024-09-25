@@ -11,28 +11,23 @@
 {% block content %}
   
 {% if library %}
-<table>
-  <tr>
-      <th>Name</th>
-      <th>steam_appid</th>
-      <th>vndbid</th>
-      <th>type</th>
-      <th>route</th>
-      <th>rating</th>
-      <th>time</th>
-  </tr>
-    {% for entry in library %}
-        <tr>
-            <td>{{ entry.name }}</td>
-            <td>{{ entry.steam_appid }}</td>
-            <td>{{ entry.vndbid }}</td>
-            <td>{{ entry.type }}</td>
-            <td>{{ entry.route }}</td>
-            <td>{{ entry.rating }}</td>
-            <td>{{ entry.time }}</td>
-        </tr>
-    {% endfor %}
-</table>
+<div class="game-library">
+  {% for entry in library %}
+  {% if entry.removed == 0 %}
+  <div class="game-item">
+    <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ entry.steam_appid }}/library_600x900_2x.jpg" alt="">
+    <p>{{ entry.name }}</p>
+    <p>Playtime: {{ entry.time//60 }}H {{ entry.time%60 }}M</p>
+    <p>Rating: {{ entry.rating }}</p>
+    <form action="/update">
+      <input type="hidden" id="game_id" name="game_id" value="{{ entry.game_id }}">
+      <button type="submit" class="btn btn-secondary">Update</button>
+    </form>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
 {% endif %}
 
 

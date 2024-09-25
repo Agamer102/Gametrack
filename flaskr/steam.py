@@ -33,24 +33,37 @@ def load():
         if not response:
             print('NO RESPONSE')
         else:
+            print(response['games'])
             for game in response['games']:
                 print(game)
                 db = get_db()
-                db.execute(
-                    'INSERT INTO games (name, steam_appid) VALUES (?, ?)',
-                    (game['name'], game['appid'])
-                )
+                try:
+                    db.execute(
+                        'INSERT INTO games (name, steam_appid) VALUES (?, ?)',
+                        (game['name'], game['appid'])
+                    )
+                except db.IntegrityError:
+                    pass
                 game_id = db.execute(
                     'SELECT id FROM games WHERE name = ? ORDER BY id',
                     (game['name'],)
                 ).fetchone()['id']
-                db.execute(
-                    'INSERT INTO library (user_id, game_id, time)'
-                    ' VALUES (?, ?, ?)',
-                    (g.user['id'], game_id, game['playtime_forever'] + game['playtime_disconnected'])
-                )
+                try:
+                    db.execute(
+                        'INSERT INTO library (user_id, game_id, time)'
+                        ' VALUES (?, ?, ?)',
+                        (g.user['id'], game_id, game['playtime_forever'] + game['playtime_disconnected'])
+                    )
+                except db.IntegrityError:
+                    db.execute(
+                        'UPDATE library SET time = ?'
+                        ' WHERE user_id = ? AND game_id = ?',
+                        (game['playtime_forever'] + game['playtime_disconnected'], g.user['id'], game_id)
+                    )
+
                 db.commit()
-                return redirect(url_for('library.library'))
+
+            return redirect(url_for('library.library'))
 
 
 def request_game(appid):

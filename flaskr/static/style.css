@@ -17,6 +17,17 @@ nav .navbar-brand .blue
     border: 1px solid #377ba8; 
 }
 
+.game-library {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.game-item img {
+    width: 100%;
+    height: auto;
+}
+
 /* For Chrome, Safari, Edge, Opera */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {

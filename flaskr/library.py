@@ -15,7 +15,7 @@ bp = Blueprint('library', __name__)
 def library():
     db = get_db()
     library = db.execute(
-        'SELECT name, steam_appid, vndbid, rating, time '
+        'SELECT game_id, name, removed, steam_appid, vndbid, rating, time '
         ' FROM library '
         '  JOIN games ON library.game_id = games.id '
         ' WHERE library.user_id = ?',
@@ -92,3 +92,26 @@ def library():
 
     
     return render_template('library/library.html', library=library)
+
+
+@bp.route('/update', methods=('GET', 'POST'))
+@login_required
+def update():
+    if request.method == 'POST':
+        s=1
+    
+    game_id = request.args.get('game_id')
+    db = get_db()
+    game = db.execute(
+        'SELECT game_id, name, removed, steam_appid, vndbid, rating, time '
+        ' FROM library '
+        '  JOIN games ON library.game_id = games.id '
+        ' WHERE library.user_id = ? AND game_id = ?',
+        (g.user['id'], game_id)
+    ).fetchone()
+
+    if len(game) != 1:
+        return redirect(url_for('library.library'))
+
+    game = list(map(dict, library))[0]
+    return render_template('update.html', game=game)
