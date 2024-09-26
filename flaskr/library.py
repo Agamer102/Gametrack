@@ -99,20 +99,4 @@ def library():
 def update():
     if request.method == 'POST':
         s=1
-    
-    game_id = request.args.get('game_id')
-    db = get_db()
-    game = db.execute(
-        'SELECT game_id, name, removed, steam_appid, vndbid, rating, time '
-        ' FROM library '
-        '  JOIN games ON library.game_id = games.id '
-        ' WHERE library.user_id = ? AND game_id = ?',
-        (g.user['id'], game_id)
-    ).fetchone()
-
-    if game == None:
-        return redirect(url_for('library.library'))
-
-    game = dict(game)
-    print(game)
-    return render_template('library/update.html', game=game)
+    return redirect(url_for('library'))

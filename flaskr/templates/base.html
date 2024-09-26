@@ -22,7 +22,7 @@
                       <li class="nav-item"><a class="nav-link" href="{{ url_for('library.library')}} ">Library</a></li>
                       <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#addGame">Add Game</a></li>
                       <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#addSteamID">Link Steam</a></li>
-                      <li class="nav-item"><a class="nav-link" href="/sell">Link VNDB</a></li>
+                      <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#addVndbID">Link VNDB</a></li>
                   </ul>
                   <ul class="navbar-nav ms-auto mt-2">
                       <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a></li>
@@ -103,6 +103,28 @@
           <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
               <button type="submit" form="linkSteamForm" class="btn btn-primary">Link</button>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addVndbID" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              Please enter your VNDB Username
+          </div>
+          <div class="modal-body">
+              <form id="linkVndbForm" method="post" action="{{ url_for('vndb.load') }}">
+                  <div class="mb-3" data-mdb-input-init>
+                      <label class="col-form-label">Username:</label>
+                      <input type="text" class="form-control" name="username">
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" form="linkVndbForm" class="btn btn-primary">Link</button>
           </div>
       </div>
     </div>

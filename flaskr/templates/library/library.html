@@ -14,12 +14,28 @@
   {% for entry in library %}
   {% if entry.removed == 0 %}
     <div class="col">
-      <div class="card" id="{{ entry.game_id }}">
-        <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ entry.steam_appid }}/library_600x900_2x.jpg" class="card-img-top" alt="" id="img{{ entry.game_id }}">
+      <div class="card">
+        <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ entry.steam_appid }}/library_600x900_2x.jpg" class="card-img-top" alt="">
         <div class="card-body">
-          <h5 class="card-title" id="name{{ entry.game_id }}">{{ entry.name }}</h5>
+          <h5 class="card-title">{{ entry.name }}</h5>
           <p class="card-text">Playtime: {{ entry.time//60 }}H {{ entry.time%60 }}M</p>
-          <p class="card-text">Rating: {{ entry.rating }}</p>
+          {% if entry.rating %}
+          <p class="card-text"></p>Rating: {{ entry.rating }}</p>
+          {% endif %}
+          <p class="card-text">
+            <button 
+            class="btn btn-secondary btn-sm" 
+            data-bs-toggle="modal" 
+            data-bs-target="#updateGameModal" 
+            data-bs-gameid="{{ entry.game_id }}" 
+            data-bs-gamename="{{ entry.name }}" 
+            data-bs-gamesteamid="{{ entry.steam_appid if entry.steam_appid is not none else '' }}"
+            data-bs-gamevndbid="{{ entry.vndbid if entry.vndbid is not none else '' }}"
+            data-bs-gametime="{{ entry.time }}"
+            data-bs-gamerating="{{ entry.rating if entry.rating is not none else '' }}">
+              Update
+            </button>
+          </p>  
         </div>
       </div>
     </div>
@@ -27,8 +43,69 @@
   {% endfor %}
 </div>
 
+<div class="modal fade" id="updateGameModal" tabindex="-1" aria-labelledby="updateGameLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="updateGameLabel">Update</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{{ url_for('library.update') }}">
+          <div class="mb-3">
+            <label for="gameName" class="col-form-label">Name:</label>
+            <input type="text" class="form-control" id="gameName" name="name">
+          </div>
+          <div class="mb-3">
+            <label for="gameSteamID" class="col-form-label">Steam AppID:</label>
+            <input type="text" class="form-control" id="gameSteamID" name="steam_appid">
+          </div>
+          <div class="mb-3">
+            <label for="gameVndbID" class="col-form-label">VNDB ID:</label>
+            <input type="text" class="form-control" id="gameVndbID" name="vndbid">
+          </div>
+          <div class="mb-3">
+            <label for="gameTime" class="col-form-label">Time (in minutes):</label>
+            <input type="number" class="form-control" id="gameTime" name="time">
+          </div>
+          <div class="mb-3">
+            <label for="gameRating" class="col-form-label">Rating:</label>
+            <input type="number" class="form-control" id="gameRating" name="rating">
+          </div>
+          <input type="hidden" id="gameID" name="game_id">
+        </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary">Update</button>
+        </div>  
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  //code for handling this mess
+const updateGameModal = document.getElementById('updateGameModal')
+if (updateGameModal) {
+  updateGameModal.addEventListener('show.bs.modal', event => {
+      // Button that triggered the modal
+    const button = event.relatedTarget;
+    const steam_appid = button.getAttribute('data-bs-gamesteamid');
+      // Extract info from data-bs-* attributes
+    document.getElementById('gameID').value = button.getAttribute('data-bs-gameid');
+    document.getElementById('gameName').value = button.getAttribute('data-bs-gamename');
+    document.getElementById('gameSteamID').value = steam_appid;
+    if (steam_appid !== ''){
+      document.getElementById('gameName').setAttribute('disabled', '');
+      document.getElementById('gameSteamID').setAttribute('disabled', '');
+    } else {
+      document.getElementById('gameName').removeAttribute('disabled');
+      document.getElementById('gameSteamID').removeAttribute('disabled');
+    }
+    document.getElementById('gameVndbID').value = button.getAttribute('data-bs-gamevndbid');
+    document.getElementById('gameTime').value = button.getAttribute('data-bs-gametime');
+    document.getElementById('gameRating').value = button.getAttribute('data-bs-gamerating');
+
+    })
+}
 </script>
 
 

@@ -63,7 +63,7 @@ def load():
 
                 db.commit()
 
-            return redirect(url_for('library.library'))
+    return redirect(url_for('library.library'))
 
 
 def request_game(appid):
