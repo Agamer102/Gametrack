@@ -1,6 +1,8 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS games;
 DROP TABLE IF EXISTS library;
+DROP TABLE IF EXISTS steamlibrary;
+DROP TABLE IF EXISTS vndblibrary;
 
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,6 +16,22 @@ CREATE TABLE games (
   name TEXT NOT NULL,
   steam_appid INTEGER UNIQUE,
   vndbid INTEGER
+);
+
+CREATE TABLE steamlibrary (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  vndbid TEXT,
+  FOREIGN KEY (vndbid) REFERENCES vndblibrary(id)
+);
+
+CREATE TABLE vndblibrary (
+  id TEXT PRIMARY KEY,
+  name_en TEXT,
+  name_romaji TEXT,
+  steam_appid INTEGER,
+  image TEXT,
+  FOREIGN KEY (steam_appid) REFERENCES steamlibrary(id)
 );
 
 CREATE TABLE library (

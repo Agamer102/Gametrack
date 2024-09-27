@@ -6,6 +6,7 @@ from werkzeug.exceptions import abort # type: ignore
 from flaskr.auth import login_required
 from flaskr.db import get_db
 from flaskr.steam import request_game
+from flaskr.vndb import request_game_vndb_steamid
 
 bp = Blueprint('library', __name__)
 
@@ -90,7 +91,7 @@ def library():
             else:
                 flash('Unsupported selection.')
 
-    
+    request_game_vndb_steamid('tmp')
     return render_template('library/library.html', library=library)
 
 

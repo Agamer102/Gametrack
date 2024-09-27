@@ -16,9 +16,11 @@ bp = Blueprint('vndb', __name__, url_prefix='/vndb')
 def load_api_key():
     s=2
 
+
 @bp.route('/load', methods=('GET', 'POST'))
 @login_required
 def load():
+    """
     if request.method == 'POST':
         username = request.form['username']
         user_id = requests.get(
@@ -35,6 +37,30 @@ def load():
         print(response)
         response=response.json()
         print(response)
-
-    # todo
+    """
     return redirect(url_for('library.library'))
+
+@bp.route('/link', methods=('GET', 'POST'))
+@login_required
+def link():
+    db = get_db()
+    steam_appids = db.execute(
+        'SELECT steam'
+    )
+
+def request_game_vndb(vndbid):
+    s=3
+
+def request_game_vndb_steamid(steamid):
+    data = {
+        'filters': ['extlink','=',['steam',702050]],
+        'fields': 'id, title, vns.title'
+    }
+    response = requests.post(
+        url='https://api.vndb.org/kana/release', json=data
+    )
+    if response.status_code == 200:
+        response = response.json()
+        return response['results'][0]['vns'][0]['id']
+    else:
+        return None
