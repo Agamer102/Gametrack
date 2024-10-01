@@ -1,13 +1,23 @@
 import os
 import sqlite3
+import sys
 
 import click # type: ignore
 import csv
 import requests # type: ignore
 import tarfile
+import zstandard as zstd # type: ignore
+import io
+import pandas as pd # type: ignore
 import time
+import threading
+from tqdm import tqdm # type: ignore
+from rich.console import Console # type: ignore
+from rich.progress import track, Progress, BarColumn, TextColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn, TimeElapsedColumn, TaskProgressColumn # type: ignore
 from flask import current_app, g # type: ignore
 
+
+console = Console()
 
 def get_db():
     if 'db' not in g:
@@ -32,6 +42,11 @@ def init_db():
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
     
+def loading_screen():
+    global stop_loading
+    while not stop_loading:
+        for _ in track(range(50), description="Loading..."):
+            time.sleep(0.1)  # Simulate work being done
 
 def load_steamlibrary():
     db = get_db()
@@ -48,14 +63,22 @@ def load_steamlibrary():
      
     start_l_time = time.time()
     db.execute('BEGIN TRANSACTION')
-    for app in applist:
-        try:
-            db.execute(
-                'INSERT INTO steamlibrary (id, name) VALUES (?, ?)',
-                (app['appid'], app['name'])
-            )
-        except db.IntegrityError:
-            pass
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeElapsedColumn(),
+        ) as progress:
+        task = progress.add_task("Loading Steam library...", total=len(applist))
+        for app in applist:
+            try:
+                db.execute(
+                    'INSERT INTO steamlibrary (id, name) VALUES (?, ?)',
+                    (app['appid'], app['name'])
+                )
+            except db.IntegrityError:
+                pass
+            progress.update(task, advance=1)
     
     db.execute('COMMIT')
     end_l_time = time.time()
@@ -70,36 +93,71 @@ def load_steamlibrary():
     return f'Initialized Steam library.\nLoad time: {l_time:.3f} S\nIndex time: {i_time:.3f} S'
 
 
-def load_vndb_library():
-    db = get_db()
+def download_file(url, filename):
+    response = requests.get(url, stream=True)
+    total_size = int(response.headers.get('content-length', 0))
+    block_size = 1024  # 1 Kilobyte
 
-    """
-    here we must get vn, releases and releases_vn and all their headers to properly process
-    currently this is being done manually but must be set to auto get from the link
-    https://dl.vndb.org/dump/vndb-db-latest.tar.zst and must be unzipped and processed
-    """
-    vn_titles_header = []
-    with open(current_app.instance_path + '/vndb/vn_titles.header', mode='r', encoding='utf-8') as f:
-        reader = csv.reader(f , delimiter='\t')
-        vn_header = next(reader)
-
-    with open(current_app.instance_path + '/vndb/vn_titles', mode='r', encoding='utf-8') as f:
-        dict_reader = csv.DictReader(f, fieldnames=vn_titles_header, delimiter='\t')
-        for row in dict_reader:
-            s=1
-            # do thing
-
+    with open(filename, 'wb') as file:
+            with Progress(
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                DownloadColumn(),
+                TransferSpeedColumn(),
+                TimeElapsedColumn(),
+            ) as progress:
+                task = progress.add_task("Downloading...", total=total_size)
+                for data in response.iter_content(block_size):
+                    file.write(data)
+                    progress.update(task, advance=len(data))
 
 
+def load_vndb_library(keep_vndb):
+    FILES = [
+    'vn', 'vn_titles', 'releases', 'releases_vn',
+    ]
+
+    if keep_vndb != True:
+        download_file('https://dl.vndb.org/dump/vndb-db-latest.tar.zst', current_app.instance_path + '/vndb-db-latest.tar.zst')
+
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeElapsedColumn()
+        ) as progress:
+
+        if keep_vndb != True:
+            decompress_task = progress.add_task("Decompressing...", total=1)
+            with open(current_app.instance_path + '/vndb-db-latest.tar.zst', 'rb') as file:
+                dctx = zstd.ZstdDecompressor()
+                with dctx.stream_reader(file) as reader:
+                    with tarfile.open(fileobj=reader, mode='r:') as tar:
+                        tar.extractall(path=current_app.instance_path + '/extracted_files')
+            progress.update(decompress_task, advance=1)
+
+        db = get_db()
+        insert_task = progress.add_task("Inserting data...", total=len(FILES))
+        for i, file in enumerate([current_app.instance_path + '/extracted_files/db/' + file for file in FILES]):
+            headers = pd.read_csv(file + '.header', delimiter='\t').columns.tolist()
+            dtype_dict = {col: 'str' for col in headers}
+            df = pd.read_csv(file, delimiter='\t', names=headers, dtype=dtype_dict)
+            df.to_sql('vndb_' + FILES[i], db, if_exists='append', index=False)
+            progress.update(insert_task, advance=1)
+        
 
 @click.command('init-db')
-def init_db_command():
+@click.option('--keep-vndb', is_flag=True, help='Keep exsiting vndb databse.')
+def init_db_command(keep_vndb):
     """Clear the existing data and create new tables."""
+
+    console.print('[bold blue]Initializing the database[/bold blue]')
     init_db()
-    click.echo('Initialized the database.')
-    click.echo('Loading Steam library...')
-    click.echo(load_steamlibrary())
-    load_vndb_library()
+
+    load_steamlibrary()
+    console.print('Loading VNDB library...')
+
+    load_vndb_library(keep_vndb)
 
 
 def init_app(app):
