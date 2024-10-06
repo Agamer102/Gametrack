@@ -1,16 +1,12 @@
 import os
 import sqlite3
-import sys
+import shutil
 
 import click # type: ignore
-import csv
 import requests # type: ignore
 import tarfile
 import zstandard as zstd # type: ignore
-import io
 import pandas as pd # type: ignore
-import time
-import threading
 from tqdm import tqdm # type: ignore
 from rich.console import Console # type: ignore
 from rich.progress import track, Progress, BarColumn, TextColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn, TimeElapsedColumn, TaskProgressColumn # type: ignore
@@ -42,11 +38,6 @@ def init_db():
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
     
-def loading_screen():
-    global stop_loading
-    while not stop_loading:
-        for _ in track(range(50), description="Loading..."):
-            time.sleep(0.1)  # Simulate work being done
 
 def load_steamlibrary():
     db = get_db()
@@ -60,8 +51,14 @@ def load_steamlibrary():
         applist = response['applist']['apps']
     except KeyError or TypeError:
         return 'Response was unable to be decoded.'
-     
-    start_l_time = time.time()
+    
+    db.execute('DROP TABLE IF EXISTS steamlibrary')
+    db.execute(
+        'CREATE TABLE steamlibrary ('
+        ' id INTEGER PRIMARY KEY,'
+        ' name TEXT NOT NULL'
+        ')'
+    )
     db.execute('BEGIN TRANSACTION')
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -81,16 +78,8 @@ def load_steamlibrary():
             progress.update(task, advance=1)
     
     db.execute('COMMIT')
-    end_l_time = time.time()
-    l_time = end_l_time - start_l_time 
-    
-    start_i_time = time.time()
     db.execute('CREATE INDEX steamlibrary_name_index ON steamlibrary (name)')
     db.commit()
-    end_i_time = time.time()
-    i_time = end_i_time - start_i_time 
-
-    return f'Initialized Steam library.\nLoad time: {l_time:.3f} S\nIndex time: {i_time:.3f} S'
 
 
 def download_file(url, filename):
@@ -112,12 +101,19 @@ def download_file(url, filename):
                     progress.update(task, advance=len(data))
 
 
-def load_vndb_library(keep_vndb):
+def load_vndb_library(nodl_vndb):
     FILES = [
     'vn', 'vn_titles', 'releases', 'releases_vn',
     ]
 
-    if keep_vndb != True:
+    TABLES = ['vndb_' + name for name in FILES]
+
+    HEADERS = [
+        'id', 'image', 'description', 'olang', 'lang', 'title',
+        'official', 'latin', 'l_steam', 'vid', 'rtype'
+    ]
+
+    if nodl_vndb != True:
         download_file('https://dl.vndb.org/dump/vndb-db-latest.tar.zst', current_app.instance_path + '/vndb-db-latest.tar.zst')
 
     with Progress(
@@ -127,14 +123,13 @@ def load_vndb_library(keep_vndb):
         TimeElapsedColumn()
         ) as progress:
 
-        if keep_vndb != True:
-            decompress_task = progress.add_task("Decompressing...", total=1)
-            with open(current_app.instance_path + '/vndb-db-latest.tar.zst', 'rb') as file:
-                dctx = zstd.ZstdDecompressor()
-                with dctx.stream_reader(file) as reader:
-                    with tarfile.open(fileobj=reader, mode='r:') as tar:
-                        tar.extractall(path=current_app.instance_path + '/extracted_files')
-            progress.update(decompress_task, advance=1)
+        decompress_task = progress.add_task("Decompressing...", total=1)
+        with open(current_app.instance_path + '/vndb-db-latest.tar.zst', 'rb') as file:
+            dctx = zstd.ZstdDecompressor()
+            with dctx.stream_reader(file) as reader:
+                with tarfile.open(fileobj=reader, mode='r:') as tar:
+                    tar.extractall(path=current_app.instance_path + '/extracted_files')
+        progress.update(decompress_task, advance=1)
 
         db = get_db()
         insert_task = progress.add_task("Inserting data...", total=len(FILES))
@@ -142,22 +137,135 @@ def load_vndb_library(keep_vndb):
             headers = pd.read_csv(file + '.header', delimiter='\t').columns.tolist()
             dtype_dict = {col: 'str' for col in headers}
             df = pd.read_csv(file, delimiter='\t', names=headers, dtype=dtype_dict)
-            df.to_sql('vndb_' + FILES[i], db, if_exists='append', index=False)
+            df = df.filter(items=[header for header in headers if header in HEADERS])
+
+            table_name = 'vndb_' + FILES[i]
+
+            # Warning be absolutely sure this is server only
+            db.execute(f'DROP TABLE IF EXISTS {table_name}')
+            db.commit()
+
+            df.to_sql(table_name, db, if_exists='append', index=False)
             progress.update(insert_task, advance=1)
+
+
+        steam_vns = db.execute (
+            f'SELECT * FROM {TABLES[2]} JOIN {TABLES[3]} ON {TABLES[3]}.id = {TABLES[2]}.id'
+            ' WHERE l_steam != 0'
+        ).fetchall()
+        steam_vns = list(map(dict, steam_vns))
+
+        titles = db.execute (
+            f'SELECT * FROM {TABLES[1]}'
+            f' WHERE lang = "ja" OR lang = "en"'
+        ).fetchall()
+        titles = list(map(dict, titles))
+
+        vns = db.execute (
+            f'SELECT * FROM {TABLES[0]}'
+        ).fetchall()
+        vns = list(map(dict, vns))
+
+        # Create table
+        db.execute('DROP TABLE IF EXISTS vndblibrary')
+        db.execute(
+            'CREATE TABLE vndblibrary ('
+            ' id TEXT PRIMARY KEY,'
+            ' title_en TEXT,'
+            ' title_rm TEXT,'
+            ' image TEXT,'
+            ' description TEXT,'
+            ' steam_appid INTEGER'
+            ')'
+        )
+
+        # FINALLY insert this data
+        final_task = progress.add_task("Finalising data...", total=len(vns))
+        db.execute('BEGIN TRANSACTION')
+        for vn in vns:
+            progress.update(final_task, advance=1)
+
+            id = vn['id']
+            titles_vn = [title for title in titles if title['id'] == id and title['official'] == 't']
+            title_en = None
+            title_rm = None
+            steam_appid = None
+            for title_vn in titles_vn:
+                if title_vn['lang'] == 'en':
+                    title_en = title_vn['title']
+                if title_vn['lang'] == vn['olang']:
+                    title_rm = title_vn['latin'] if title_vn['latin'] != "\\N" else title_vn['title']
+            for steam_vn in steam_vns:
+                if steam_vn['vid'] == id:
+                    steam_appid = steam_vn['l_steam']
+
+            # print(id, title_en, title_rm, steam_appid)
+            try:
+                db.execute (
+                    'INSERT INTO vndblibrary (id, title_en, title_rm, image, description, steam_appid)'
+                    ' VALUES (?, ?, ?, ?, ?, ?)',
+                    (id, title_en, title_rm, vn['image'], vn['description'], steam_appid)
+                )
+            except db.IntegrityError:
+                pass
         
+        db.execute('COMMIT')
+
+        # Clean up temporary tables
+        for table in TABLES:
+            db.execute(f'DROP TABLE {table}')
+
+        #Delete temporary files
+        shutil.rmtree(current_app.instance_path + '/extracted_files')
+
+        
+def load_gamelibrary():
+    db = get_db()
+    # Create table
+    db.execute('DROP TABLE IF EXISTS gamelibrary')
+    db.execute(
+        'CREATE TABLE gamelibrary ('
+        ' id INTEGER PRIMARY KEY AUTOINCREMENT,'
+        ' steam_appid INTEGER,'
+        ' vndbid TEXT,'
+        ' UNIQUE (steam_appid, vndbid)'
+        ' )'
+    )
+
+    db.execute(
+        'INSERT INTO gamelibrary (steam_appid, vndbid)'
+        ' SELECT steamlibrary.id, vndblibrary.id FROM'
+        '  steamlibrary LEFT JOIN vndblibrary ON steamlibrary.id = vndblibrary.steam_appid'
+        ' UNION'
+        ' SELECT steamlibrary.id, vndblibrary.id FROM'
+        '  vndblibrary LEFT JOIN steamlibrary ON steamlibrary.id = vndblibrary.steam_appid'
+    )
+    db.commit()
+
+
 
 @click.command('init-db')
-@click.option('--keep-vndb', is_flag=True, help='Keep exsiting vndb databse.')
-def init_db_command(keep_vndb):
+@click.option('--keep-games', is_flag=True, help='Keeo the existing game database.')
+@click.option('--keep-steam', is_flag=True, help='Keep the existing Steam database')
+@click.option('--keep-vndb', is_flag=True, help='Keep the existing VNDB database.')
+@click.option('--nodl-vndb', is_flag=True, help='Do not re-download VNDB database.')
+def init_db_command(keep_games, keep_steam, keep_vndb, nodl_vndb):
     """Clear the existing data and create new tables."""
 
     console.print('[bold blue]Initializing the database[/bold blue]')
     init_db()
 
-    load_steamlibrary()
-    console.print('Loading VNDB library...')
+    if keep_games != True:
+        if keep_steam != True:
+            load_steamlibrary()
 
-    load_vndb_library(keep_vndb)
+        if keep_vndb != True:
+            console.print('[bold blue]Loading VNDB library[/bold blue]')
+            load_vndb_library(nodl_vndb)
+
+        load_gamelibrary()
+
+    console.print('[bold green]Database has been initialized[/bold green]')
 
 
 def init_app(app):
