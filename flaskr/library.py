@@ -15,34 +15,9 @@ bp = Blueprint('library', __name__)
 @login_required
 def library():
     db = get_db()
-    #first get the users games
-    user_library = db.execute(
-        'SELECT * FROM library'
-        ' JOIN gamelibrary ON library.game_id = gamelibrary.id'
-        ' WHERE library.user_id = ?',
-        (g.user['id'],)
-    ).fetchall()
-    user_library = list(map(dict, user_library))
-
-    for entry in user_library:
-        if entry['vndbid']:
-            entry['name'] = db.execute (
-                'SELECT title_rm FROM vndblibrary WHERE id = ?',
-                (entry['vndbid'],)
-            ).fetchone()['title_rm']
-            image = db.execute (
-                'SELECT image FROM vndblibrary WHERE id = ?',
-                (entry['vndbid'],)
-            ).fetchone()['image']
-            entry['image'] = f'https://t.vndb.org/{image[:2]}/{image[-2:]}/{image[2:]}.jpg'
-        if entry['steam_appid']:
-            entry['name'] = db.execute (
-                'SELECT name FROM steamlibrary WHERE id = ?',
-                (entry['steam_appid'],)
-            ).fetchone()['name']
-        # print(entry)
    
     if request.method == 'POST':
+        """
         input_type = request.form['select_val']
         valid_types = ['name', 'steam_appid', 'vndbid']
         id = request.form.getlist('id')
@@ -108,8 +83,35 @@ def library():
                     db.commit()
             else:
                 flash('Unsupported selection.')
+                """
 
-    request_game_vndb_steamid('tmp')
+    #first get the users games
+    user_library = db.execute(
+        'SELECT * FROM library'
+        ' JOIN gamelibrary ON library.game_id = gamelibrary.id'
+        ' WHERE library.user_id = ?',
+        (g.user['id'],)
+    ).fetchall()
+    user_library = list(map(dict, user_library))
+
+    for entry in user_library:
+        if entry['vndbid']:
+            entry['name'] = db.execute (
+                'SELECT title_rm FROM vndblibrary WHERE id = ?',
+                (entry['vndbid'],)
+            ).fetchone()['title_rm']
+            image = db.execute (
+                'SELECT image FROM vndblibrary WHERE id = ?',
+                (entry['vndbid'],)
+            ).fetchone()['image']
+            entry['image'] = f'https://t.vndb.org/{image[:2]}/{image[-2:]}/{image[2:]}.jpg'
+        if entry['steam_appid']:
+            entry['name'] = db.execute (
+                'SELECT name FROM steamlibrary WHERE id = ?',
+                (entry['steam_appid'],)
+            ).fetchone()['name']
+        # print(entry)
+
     return render_template('library/library.html', user_library=user_library)
 
 
@@ -137,3 +139,32 @@ def delete():
         db.commit()
 
     return redirect(url_for('library.library'))
+
+
+@bp.route('/search')
+def search():
+    query = request.args['q']
+
+    if len(query) > 4:
+        query = f'%{request.args["q"]}%'
+
+    db = get_db()
+
+    # check steam database
+
+    steam_r = db.execute (
+        'SELECT * FROM steamlibrary WHERE name LIKE ?',
+        (query,)
+    ).fetchall()
+    steam_r = list(map(dict, steam_r))
+    print(steam_r)
+
+    vndb_r = db.execute (
+        'SELECT * FROM vndblibrary WHERE'
+        ' title_en LIKE ? OR title_rm LIKE ?',
+        (query, query)
+    ).fetchall()
+    vndb_r = list(map(dict, vndb_r))
+    print(vndb_r)
+
+    return render_template('library/update.html', steam_r=steam_r, vndb_r=vndb_r)

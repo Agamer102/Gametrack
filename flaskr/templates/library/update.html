@@ -5,5 +5,27 @@
 {% endblock %}
 
 {% block content %}
-
+  <!--this looks awful, make it not suck-->
+  <div class="row row-cols-1 row-cols-md-6 g-4">
+    {% for steam in steam_r %}
+      <div class="col">
+        <div class="card">
+          <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ steam.id }}/library_600x900_2x.jpg" class="card-img-top" alt="">
+          <div class="card-body">
+            <h5 class="card-title">{{ steam.name }}</h5>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    {% for vndb in vndb_r %}
+    <div class="col">
+      <div class="card">
+        <img src="" class="card-img-top" alt="">
+        <div class="card-body">
+          <h5 class="card-title">{{ vndb.title_rm }}</h5>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 {% endblock %}
