@@ -1,9 +1,5 @@
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>{% block title %}Log In{% endblock %}</h1>
-{% endblock %}
-
 {% block content %}
 <script>
   document.addEventListener("DOMContentLoaded", function() {
@@ -19,6 +15,7 @@
 </script>
 
 <div class="container">
+  <h1>{% block title %}Register{% endblock %}</h1>
   <form method="post" class="needs-validation" id="register" novalidate>
       <div data-mdb-input-init class="form-outline mb-4">
         <label for="username" class="form-label">Username</label>

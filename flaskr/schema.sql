@@ -16,5 +16,6 @@ CREATE TABLE library (
   rating REAL,
   time INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (game_id) REFERENCES gamelibrary (id)
+  FOREIGN KEY (game_id) REFERENCES gamelibrary (id),
+  UNIQUE (user_id, game_id)
 );

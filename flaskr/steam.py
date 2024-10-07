@@ -23,9 +23,9 @@ def load_api_key():
 @login_required
 def load():
     if request.method == 'POST':
-        print('POST request received')
+        # print('POST request received')
         steamid = request.form['id']
-        print(f'Steam ID: {steamid}')
+        # print(f'Steam ID: {steamid}')
         response = requests.get(
             f'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={g.steam_api_key}&steamid={steamid}&include_appinfo=true&format=json'
         ).json()['response']
@@ -33,21 +33,15 @@ def load():
         if not response:
             print('NO RESPONSE')
         else:
-            print(response['games'])
+            # print(response['games'])
             for game in response['games']:
-                print(game)
+                # print(game)
                 db = get_db()
-                try:
-                    db.execute(
-                        'INSERT INTO games (name, steam_appid) VALUES (?, ?)',
-                        (game['name'], game['appid'])
-                    )
-                except db.IntegrityError:
-                    pass
-                game_id = db.execute(
-                    'SELECT id FROM games WHERE name = ? ORDER BY id',
-                    (game['name'],)
+                # print(game['appid'])
+                game_id = db.execute (
+                    'SELECT id FROM gamelibrary WHERE steam_appid = ?', (game['appid'],)
                 ).fetchone()['id']
+                # print(game_id)
                 try:
                     db.execute(
                         'INSERT INTO library (user_id, game_id, time)'

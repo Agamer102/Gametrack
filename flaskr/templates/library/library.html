@@ -9,13 +9,17 @@
 
 
 {% block content %}
-{% if library %}
+{% if user_library %}
 <div class="row row-cols-1 row-cols-md-6 g-4">
-  {% for entry in library %}
+  {% for entry in user_library %}
   {% if entry.removed == 0 %}
     <div class="col">
       <div class="card">
+        {% if entry.steam_appid %}
         <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ entry.steam_appid }}/library_600x900_2x.jpg" class="card-img-top" alt="">
+        {% else %}
+        <img src="{{ entry.image }}" class="card-img-top" alt="">
+        {% endif %}
         <div class="card-body">
           <h5 class="card-title">{{ entry.name }}</h5>
           <p class="card-text">Playtime: {{ entry.time//60 }}H {{ entry.time%60 }}M</p>
@@ -51,18 +55,18 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="post" action="{{ url_for('library.update') }}">
-          <div class="mb-3">
+        <form method="post" action="{{ url_for('library.update') }}" id="gameUpdateForm">
+          <div class="mb-3" id="gameNameDiv">
             <label for="gameName" class="col-form-label">Name:</label>
-            <input type="text" class="form-control" id="gameName" name="name">
+            <input type="text" class="form-control" id="gameName" name="name" disabled>
           </div>
-          <div class="mb-3">
+          <div class="mb-3" id="gameSteamIDDiv">
             <label for="gameSteamID" class="col-form-label">Steam AppID:</label>
-            <input type="text" class="form-control" id="gameSteamID" name="steam_appid">
+            <input type="text" class="form-control" id="gameSteamID" name="steam_appid" disabled>
           </div>
-          <div class="mb-3">
+          <div class="mb-3" id="gameVndbIDDiv">
             <label for="gameVndbID" class="col-form-label">VNDB ID:</label>
-            <input type="text" class="form-control" id="gameVndbID" name="vndbid">
+            <input type="text" class="form-control" id="gameVndbID" name="vndbid" disabled>
           </div>
           <div class="mb-3">
             <label for="gameTime" class="col-form-label">Time (in minutes):</label>
@@ -75,7 +79,11 @@
           <input type="hidden" id="gameID" name="game_id">
         </form>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary">Update</button>
+          <form method="post" action="{{ url_for('library.delete')}}">
+            <button type="submit" class="btn btn-danger" style="align-self: left;">Delete</button>
+            <input type="hidden" id="gameIDDel" name="game_id">
+          </form>
+          <button type="submit" form="gameUpdateForm" class="btn btn-primary">Update</button>
         </div>  
       </div>
     </div>
@@ -88,21 +96,18 @@ if (updateGameModal) {
   updateGameModal.addEventListener('show.bs.modal', event => {
       // Button that triggered the modal
     const button = event.relatedTarget;
-    const steam_appid = button.getAttribute('data-bs-gamesteamid');
       // Extract info from data-bs-* attributes
     document.getElementById('gameID').value = button.getAttribute('data-bs-gameid');
+    document.getElementById('gameIDDel').value = button.getAttribute('data-bs-gameid');
     document.getElementById('gameName').value = button.getAttribute('data-bs-gamename');
-    document.getElementById('gameSteamID').value = steam_appid;
-    if (steam_appid !== ''){
-      document.getElementById('gameName').setAttribute('disabled', '');
-      document.getElementById('gameSteamID').setAttribute('disabled', '');
-    } else {
-      document.getElementById('gameName').removeAttribute('disabled');
-      document.getElementById('gameSteamID').removeAttribute('disabled');
-    }
-    document.getElementById('gameVndbID').value = button.getAttribute('data-bs-gamevndbid');
+    document.getElementById('gameSteamID').value = steam_appid = button.getAttribute('data-bs-gamesteamid');
+    document.getElementById('gameVndbID').value = vndbid = button.getAttribute('data-bs-gamevndbid');
     document.getElementById('gameTime').value = button.getAttribute('data-bs-gametime');
     document.getElementById('gameRating').value = button.getAttribute('data-bs-gamerating');
+
+    // remove empty fields
+    document.getElementById('gameSteamIDDiv').style.display = steam_appid != '' ? '': 'none'
+    document.getElementById('gameVndbIDDiv').style.display = vndbid != '' ? '': 'none'
 
     })
 }

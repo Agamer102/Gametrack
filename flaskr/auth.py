@@ -49,7 +49,7 @@ def register():
             except db.IntegrityError:
                 errors.append(4)
             else:
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('library.library'))
         
         for error in errors:
             flash(error)
