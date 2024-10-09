@@ -5,27 +5,57 @@
 {% endblock %}
 
 {% block content %}
-  <!--this looks awful, make it not suck-->
-  <div class="row row-cols-1 row-cols-md-6 g-4">
-    {% for steam in steam_r %}
-      <div class="col">
-        <div class="card">
-          <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ steam.id }}/library_600x900_2x.jpg" class="card-img-top" alt="">
+<div class="card mb-3">
+    {% for result in results %}
+    {% if loop.index <= 20 %}
+      {% if result.steam_appid  and result.vndbid %}
+      <div class="row g-0">
+        <div class="col-md-4">
+          <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ result.steam_appid }}/header.jpg" class="img-fluid rounded-start" alt="...">
+        </div>
+        <div class="col-md-8">
           <div class="card-body">
-            <h5 class="card-title">{{ steam.name }}</h5>
+            <h5 class="card-title">{{ result.name }}</h5>
+            <p class="card-text">Steam AppID {{ result.steam_appid }}</p>
+            <p class="card-text">VNDB ID {{ result.vndbid }}</p>
+      {% elif result.steam_appid %}
+      <div class="row g-0">
+        <div class="col-md-4">
+          <img src="https://steamcdn-a.akamaihd.net/steam/apps/{{ result.steam_appid }}/header.jpg" class="img-fluid rounded-start" alt="...">
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">{{ result.name }}</h5>
+            <p class="card-text">Steam AppID {{ result.steam_appid }}</p>
+      {% elif result.vndbid %}
+      <div class="row g-0">
+        <div class="col-md-4">
+          <img src="" class="img-fluid rounded-start" alt="...">
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">{{ result.title_rm if result.title_rm else result.title_en }}</h5>
+            <p class="card-text">Steam AppID {{ result.vndbid }}</p>
+      {% endif %}
+            <button 
+            class="btn btn-secondary" 
+            data-bs-toggle="modal" 
+            data-bs-target="#updateGameModal" 
+            data-bs-gameid="{{ result.id }}" 
+            data-bs-gamename="{{ result.name if result.name is not none else result.title_rm }}" 
+            data-bs-gamesteamid="{{ result.steam_appid if result.steam_appid is not none else '' }}"
+            data-bs-gamevndbid="{{ result.vndbid if result.vndbid is not none else '' }}"
+            data-bs-gametime="0"
+            data-bs-gamerating="''">
+              Add
+            </button>
           </div>
         </div>
       </div>
+    {% endif %}
     {% endfor %}
-    {% for vndb in vndb_r %}
-    <div class="col">
-      <div class="card">
-        <img src="" class="card-img-top" alt="">
-        <div class="card-body">
-          <h5 class="card-title">{{ vndb.title_rm }}</h5>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
+    {% if results|length > 20 %}
+    <p>{{ results|length - 20 }} more results available</p>
+    {% endif %}
+</div>
 {% endblock %}

@@ -39,7 +39,4 @@ def create_app(test_config=None):
     from . import steam
     app.register_blueprint(steam.bp)
 
-    from . import vndb
-    app.register_blueprint(vndb.bp)
-
     return app

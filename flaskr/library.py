@@ -5,85 +5,15 @@ from werkzeug.exceptions import abort # type: ignore
 
 from flaskr.auth import login_required
 from flaskr.db import get_db
-from flaskr.steam import request_game
-from flaskr.vndb import request_game_vndb_steamid
 
 bp = Blueprint('library', __name__)
 
 
-@bp.route('/',methods=('GET', 'POST'))
+@bp.route('/')
 @login_required
 def library():
+    print(g.user['username']if g.user else None)
     db = get_db()
-   
-    if request.method == 'POST':
-        """
-        input_type = request.form['select_val']
-        valid_types = ['name', 'steam_appid', 'vndbid']
-        id = request.form.getlist('id')
-        time = request.form['time']
-        rating = request.form['rating']
-        error = None
-        
-        for c in id:
-            if c == '':
-                continue
-            else:
-                id = c
-                break
-        else:
-            error = 'Invalid name or id.'
-                
-
-        if input_type not in valid_types:
-            error = 'Invalid selection.'    
-        elif not time.isnumeric():
-            error = 'Time played is missing or invalid.'
-        elif rating and not rating.isnumeric():
-            error = 'Invalid rating.'
-
-        if error is not None:
-            flash(error)
-        else:
-            if input_type == 'name':
-                db.execute(
-                    'INSERT INTO games (name) VALUES (?)',
-                    (id,)
-                )
-                game_id = db.execute(
-                    'SELECT id FROM games WHERE name = ? ORDER BY id',
-                    (id,)
-                ).fetchone()['id']
-                db.execute(
-                    'INSERT INTO library (user_id, game_id, rating, time)'
-                    ' VALUES (?, ?, ?, ?)',
-                    (g.user['id'], game_id, rating, time)
-                )
-                db.commit()
-            elif input_type == 'steam_appid':
-                game = request_game(str(id))
-                if game == 'invalid':
-                    print('invalid id')
-                    flash('Invalid Steam AppID.')
-                else:
-                    db.execute(
-                        'INSERT INTO games (name, steam_appid)'
-                        ' VALUES (?, ?)',
-                        (game['name'], game['steam_appid'])
-                    )
-                    game_id = db.execute(
-                        'SELECT id FROM games WHERE steam_appid = ? ORDER BY id',
-                        (id,)
-                    ).fetchone()['id']
-                    db.execute(
-                    'INSERT INTO library (user_id, game_id, rating, time)'
-                    ' VALUES (?, ?, ?, ?)',
-                    (g.user['id'], game_id, rating, time)
-                    )
-                    db.commit()
-            else:
-                flash('Unsupported selection.')
-                """
 
     #first get the users games
     user_library = db.execute(
@@ -119,7 +49,8 @@ def library():
 @login_required
 def update():
     if request.method == 'POST':
-        s=1
+        args = request.form['game_id']
+        print(args)
     return redirect(url_for('library.library'))
 
 
@@ -145,26 +76,40 @@ def delete():
 def search():
     query = request.args['q']
 
-    if len(query) > 4:
-        query = f'%{request.args["q"]}%'
+    if len(query) < 4:
+        return redirect(url_for('library.library'))
+
+    query_s = f'{query}%'
+    query_e = f'%{query}'
+    query_f = f'%{query}%'
 
     db = get_db()
 
-    # check steam database
-
-    steam_r = db.execute (
-        'SELECT * FROM steamlibrary WHERE name LIKE ?',
-        (query,)
+    results = db.execute (
+        'SELECT *,'
+        ' (CASE'
+        '   WHEN steamlibrary.name LIKE ? AND (vndblibrary.title_rm LIKE ? OR vndblibrary.title_en LIKE ?) THEN 6'
+        '   WHEN steamlibrary.name LIKE ? OR vndblibrary.title_rm LIKE ? OR vndblibrary.title_en LIKE ? THEN 5'
+        '   WHEN steamlibrary.name LIKE ? AND (vndblibrary.title_rm LIKE ? OR vndblibrary.title_en LIKE ?) THEN 4'
+        '   WHEN steamlibrary.name LIKE ? OR vndblibrary.title_rm LIKE ? OR vndblibrary.title_en LIKE ? THEN 3'
+        '   WHEN steamlibrary.name LIKE ? AND (vndblibrary.title_rm LIKE ? OR vndblibrary.title_en LIKE ?) THEN 2'
+        '   WHEN steamlibrary.name LIKE ? OR vndblibrary.title_rm LIKE ? OR vndblibrary.title_en LIKE ? THEN 3'
+        '   ELSE 0'
+        '  END) AS relevance'
+        ' FROM gamelibrary'
+        '  LEFT JOIN steamlibrary ON gamelibrary.steam_appid = steamlibrary.id'
+        '  LEFT JOIN vndblibrary ON gamelibrary.vndbid = vndblibrary.id'
+        '  WHERE steamlibrary.name LIKE ?'
+        '   OR vndblibrary.title_rm LIKE ?'
+        '   OR vndblibrary.title_en LIKE ?'
+        ' ORDER BY relevance DESC',
+        (query, query, query, query, query, query,
+         query_s, query_s, query_s, query_s, query_s, query_s,
+         query_e, query_e, query_e, query_e, query_e, query_e,
+         query_f, query_f, query_f)
     ).fetchall()
-    steam_r = list(map(dict, steam_r))
-    print(steam_r)
 
-    vndb_r = db.execute (
-        'SELECT * FROM vndblibrary WHERE'
-        ' title_en LIKE ? OR title_rm LIKE ?',
-        (query, query)
-    ).fetchall()
-    vndb_r = list(map(dict, vndb_r))
-    print(vndb_r)
+    results = list(map(dict, results))
+    # print(results)
 
-    return render_template('library/update.html', steam_r=steam_r, vndb_r=vndb_r)
+    return render_template('library/update.html', results=results)

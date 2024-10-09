@@ -49,7 +49,8 @@ def register():
             except db.IntegrityError:
                 errors.append(4)
             else:
-                return redirect(url_for('library.library'))
+                session.clear()
+                return redirect(url_for('auth.login'))
         
         for error in errors:
             flash(error)
@@ -83,7 +84,7 @@ def login():
             if not errors:
                 session.clear()
                 session['user_id'] = user['id']
-                return redirect(url_for('index'))
+                return redirect(url_for('library.library'))
         
         for error in errors:
             flash(error)
@@ -94,7 +95,7 @@ def login():
 @bp.route('logout')
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    return redirect(url_for('auth.login'))
 
 
 def login_required(view):

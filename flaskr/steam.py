@@ -29,7 +29,7 @@ def load():
         response = requests.get(
             f'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={g.steam_api_key}&steamid={steamid}&include_appinfo=true&format=json'
         ).json()['response']
-        print('RESPONSE GOT')
+        # print('RESPONSE GOT')
         if not response:
             print('NO RESPONSE')
         else:
@@ -44,31 +44,17 @@ def load():
                 # print(game_id)
                 try:
                     db.execute(
-                        'INSERT INTO library (user_id, game_id, time)'
-                        ' VALUES (?, ?, ?)',
-                        (g.user['id'], game_id, game['playtime_forever'] + game['playtime_disconnected'])
+                        'INSERT INTO library (user_id, game_id, steam_sync, time)'
+                        ' VALUES (?, ?, ?, ?)',
+                        (g.user['id'], game_id, 1, game['playtime_forever'] + game['playtime_disconnected'])
                     )
                 except db.IntegrityError:
                     db.execute(
                         'UPDATE library SET time = ?'
-                        ' WHERE user_id = ? AND game_id = ?',
+                        ' WHERE user_id = ? AND game_id = ? AND steam_sync = 1',
                         (game['playtime_forever'] + game['playtime_disconnected'], g.user['id'], game_id)
                     )
 
                 db.commit()
 
     return redirect(url_for('library.library'))
-
-
-def request_game(appid):
-    response = requests.get(
-        url="http://store.steampowered.com/api/appdetails/", params={"appids": appid}
-    ).json()
-    try:
-        if response:
-            return {"steam_appid": appid, "name": response[appid]["data"]["name"]}
-        else:
-            return 'invalid'
-    except KeyError:
-        return 'invalid'
-    

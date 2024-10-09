@@ -198,6 +198,7 @@ def load_vndb_library(nodl_vndb):
             for steam_vn in steam_vns:
                 if steam_vn['vid'] == id:
                     steam_appid = steam_vn['l_steam']
+                    break
 
             # print(id, title_en, title_rm, steam_appid)
             try:
@@ -245,15 +246,17 @@ def load_gamelibrary():
 
 
 @click.command('init-db')
-@click.option('--keep-games', is_flag=True, help='Keeo the existing game database.')
+@click.option('--keep-users',is_flag=True, help='Keep the existing users and their data.')
+@click.option('--keep-games', is_flag=True, help='Keep the existing game database.')
 @click.option('--keep-steam', is_flag=True, help='Keep the existing Steam database')
 @click.option('--keep-vndb', is_flag=True, help='Keep the existing VNDB database.')
 @click.option('--nodl-vndb', is_flag=True, help='Do not re-download VNDB database.')
-def init_db_command(keep_games, keep_steam, keep_vndb, nodl_vndb):
+def init_db_command(keep_users, keep_games, keep_steam, keep_vndb, nodl_vndb):
     """Clear the existing data and create new tables."""
 
-    console.print('[bold blue]Initializing the database[/bold blue]')
-    init_db()
+    if keep_users != True:
+        console.print('[bold blue]Initializing the database[/bold blue]')
+        init_db()
 
     if keep_games != True:
         if keep_steam != True:

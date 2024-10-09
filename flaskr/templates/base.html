@@ -39,55 +39,6 @@
       </div>
   </nav>
   {% if g.user %}
-  <div class="modal fade" id="addGame" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-          <div class="modal-header">
-              <select id="inputType" class="form-select" required>
-                  <option value="" disabled selected="true">Add game via:</option>
-                  <option value="name">Name</option>
-                  <option value="steam_appid">Steam AppID</option>
-                  <option value="vndbid">VNDB ID</option>
-              </select>
-          </div>
-          <div class="modal-body" id="addGameFormDiv">
-              <form method="post" class="needs-validation" id="addGameForm" action="{{ url_for('library.library') }}" novalidate>
-                  <div class="mb-3" id="nameField" data-mdb-input-init>
-                      <label class="col-form-label">Name:</label>
-                      <input type="text" class="form-control" name="id">
-                      <div class="invalid-feedback" id="name_error">Please enter the name.</div>
-                  </div>
-                  <div class="mb-3" id="steamAppidField" data-mdb-input-init>
-                      <label class="col-form-label">Steam AppID:</label>
-                      <input type="number" class="form-control" name="id">
-                      <div class="invalid-feedback" id="steam_appid_error">Invalid Steam AppID.</div>
-                  </div>
-                  <div class="mb-3" id="vndbidField" data-mdb-input-init>
-                      <label class="col-form-label">VNDB ID:</label>
-                      <input type="number" class="form-control" name="id">
-                      <div class="invalid-feedback" id="vndbid_error">Invalid VNDB ID.</div>
-                  </div>
-                  <div class="mb-3" data-mdb-input-init>
-                      <label class="col-form-label">Time played (in minutes):</label>
-                      <input type="number" class="form-control" name="time" value=0 required="true">
-                      <div class="invalid-feedback" id="time_error">Time should be a number.</div>
-                  </div>
-                  <div class="mb-3" data-mdb-input-init>
-                      <label class="col-form-label">Rating (optional):</label>
-                      <input type="number" class="form-control" name="rating">
-                      <div class="invalid-feedback" id="rarting_error">Rating should be a number.</div>
-                  </div>
-                  <input type="hidden" id="selectVal" name="select_val" required>
-              </form>
-          </div>
-          <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="submit" form="addGameForm" class="btn btn-primary">Add</button>
-          </div>
-      </div>
-    </div>
-  </div>
-  
   <div class="modal fade" id="addSteamID" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -110,32 +61,71 @@
     </div>
   </div>
 
-  <script>
-    document.getElementById('inputType').addEventListener('change', updateFields);
-    document.getElementById('addGame').addEventListener('show.bs.modal', updateFields);
-
-    (() => {
-  'use strict'
-
-  // Fetch all the forms we want to apply custom Bootstrap validation styles to
-  const forms = document.querySelectorAll('.needs-validation')
-
-  // Loop over them and prevent submission
-  Array.from(forms).forEach(form => {
-    form.addEventListener('submit', event => {
-      if (!form.checkValidity()) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
-
-      form.classList.add('was-validated')
-    }, false)
-  })
-})()
-</script>
+  <div class="modal fade" id="updateGameModal" tabindex="-1" aria-labelledby="updateGameLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="updateGameLabel">Update</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="post" action="{{ url_for('library.update') }}" id="gameUpdateForm">
+            <div class="mb-3" id="gameNameDiv">
+              <label for="gameName" class="col-form-label">Name:</label>
+              <input type="text" class="form-control" id="gameName" name="name" disabled>
+            </div>
+            <div class="mb-3" id="gameSteamIDDiv">
+              <label for="gameSteamID" class="col-form-label">Steam AppID:</label>
+              <input type="text" class="form-control" id="gameSteamID" name="steam_appid" disabled>
+            </div>
+            <div class="mb-3" id="gameVndbIDDiv">
+              <label for="gameVndbID" class="col-form-label">VNDB ID:</label>
+              <input type="text" class="form-control" id="gameVndbID" name="vndbid" disabled>
+            </div>
+            <div class="mb-3">
+              <label for="gameTime" class="col-form-label">Time (in minutes):</label>
+              <input type="number" class="form-control" id="gameTime" name="time">
+            </div>
+            <div class="mb-3">
+              <label for="gameRating" class="col-form-label">Rating:</label>
+              <input type="number" class="form-control" id="gameRating" name="rating">
+            </div>
+            <input type="hidden" id="gameID" name="game_id">
+          </form>
+          <div class="modal-footer">
+            <form method="post" action="{{ url_for('library.delete')}}">
+              <button type="submit" class="btn btn-danger" style="align-self: left;">Delete</button>
+              <input type="hidden" id="gameIDDel" name="game_id">
+            </form>
+            <button type="submit" form="gameUpdateForm" class="btn btn-primary">Update</button>
+          </div>  
+        </div>
+      </div>
+    </div>
+  </div>
   {% endif %}
-
-
+<script>
+  const updateGameModal = document.getElementById('updateGameModal')
+  if (updateGameModal) {
+    updateGameModal.addEventListener('show.bs.modal', event => {
+        // Button that triggered the modal
+      const button = event.relatedTarget;
+        // Extract info from data-bs-* attributes
+      document.getElementById('gameID').value = button.getAttribute('data-bs-gameid');
+      document.getElementById('gameIDDel').value = button.getAttribute('data-bs-gameid');
+      document.getElementById('gameName').value = button.getAttribute('data-bs-gamename');
+      document.getElementById('gameSteamID').value = steam_appid = button.getAttribute('data-bs-gamesteamid');
+      document.getElementById('gameVndbID').value = vndbid = button.getAttribute('data-bs-gamevndbid');
+      document.getElementById('gameTime').value = button.getAttribute('data-bs-gametime');
+      document.getElementById('gameRating').value = button.getAttribute('data-bs-gamerating');
+  
+      // remove empty fields
+      document.getElementById('gameSteamIDDiv').style.display = steam_appid != '' ? '': 'none'
+      document.getElementById('gameVndbIDDiv').style.display = vndbid != '' ? '': 'none'
+  
+      })
+  }
+  </script>
     {% block content %}{% endblock %}
   </body>
 </html>
