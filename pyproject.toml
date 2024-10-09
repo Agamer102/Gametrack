@@ -1,9 +1,9 @@
 [project]
-name = "flaskr"
+name = "gametrack"
 version = "1.0.0"
-description = "The basic blog app built in the Flask tutorial."
+description = "A web app to track played games."
 dependencies = [
-    "flask", "requests",
+    "flask", "click", "requests","zstandard", "pandas", "rich"
 ]
 
 [build-system]

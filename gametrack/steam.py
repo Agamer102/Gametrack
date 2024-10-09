@@ -7,8 +7,8 @@ from flask import ( # type: ignore
 )
 from werkzeug.exceptions import abort # type: ignore
 
-from flaskr.auth import login_required
-from flaskr.db import get_db
+from gametrack.auth import login_required
+from gametrack.db import get_db
 
 bp = Blueprint('steam', __name__, url_prefix='/steam')
 

@@ -1,6 +1,6 @@
 import pytest # type: ignore
 from flask import g, session # type: ignore
-from flaskr.db import get_db
+from gametrack.db import get_db
 
 
 def test_register(client, app):

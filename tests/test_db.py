@@ -1,7 +1,7 @@
 import sqlite3
 
 import pytest # type: ignore
-from flaskr.db import get_db
+from gametrack.db import get_db
 
 
 def test_get_close_db(app):

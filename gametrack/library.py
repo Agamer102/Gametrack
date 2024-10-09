@@ -3,8 +3,8 @@ from flask import ( # type: ignore
 )
 from werkzeug.exceptions import abort # type: ignore
 
-from flaskr.auth import login_required
-from flaskr.db import get_db
+from gametrack.auth import login_required
+from gametrack.db import get_db
 
 bp = Blueprint('library', __name__)
 
@@ -12,7 +12,7 @@ bp = Blueprint('library', __name__)
 @bp.route('/')
 @login_required
 def library():
-    print(g.user['username']if g.user else None)
+    # print(g.user['username']if g.user else None)
     db = get_db()
 
     #first get the users games
@@ -34,7 +34,6 @@ def library():
                 'SELECT image FROM vndblibrary WHERE id = ?',
                 (entry['vndbid'],)
             ).fetchone()['image']
-            entry['image'] = f'https://t.vndb.org/{image[:2]}/{image[-2:]}/{image[2:]}.jpg'
         if entry['steam_appid']:
             entry['name'] = db.execute (
                 'SELECT name FROM steamlibrary WHERE id = ?',
@@ -49,8 +48,26 @@ def library():
 @login_required
 def update():
     if request.method == 'POST':
-        args = request.form['game_id']
-        print(args)
+        game_id = request.form['game_id']
+        time = request.form['time']
+        rating = request.form['rating']
+
+        db = get_db()
+
+        try:
+            db.execute(
+                'INSERT INTO library (user_id, game_id, steam_sync, time, rating)'
+                ' VALUES (?, ?, ?, ?, ?)',
+                (g.user['id'], game_id, 0, time, rating)
+            )
+        except db.IntegrityError:
+            db.execute(
+                'UPDATE library SET time = ?, rating = ?'
+                ' WHERE user_id = ? AND game_id = ? AND steam_sync = 0',
+                (time, rating, g.user['id'], game_id)
+            )
+
+        db.commit()
     return redirect(url_for('library.library'))
 
 

@@ -2,8 +2,8 @@ import os
 import tempfile
 
 import pytest # type: ignore
-from flaskr import create_app
-from flaskr.db import get_db, init_db
+from gametrack import create_app
+from gametrack.db import get_db, init_db
 
 
 with open(os.path.join(os.path.dirname(__file__), 'data.sql'), 'rb') as f:

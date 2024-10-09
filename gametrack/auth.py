@@ -5,7 +5,7 @@ from flask import ( # type: ignore
 )
 from werkzeug.security import check_password_hash, generate_password_hash # type: ignore
 
-from flaskr.db import get_db
+from gametrack.db import get_db
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 

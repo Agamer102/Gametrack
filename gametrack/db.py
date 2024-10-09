@@ -2,12 +2,11 @@ import os
 import sqlite3
 import shutil
 
-import click # type: ignore
+import click  # type: ignore
 import requests # type: ignore
 import tarfile
 import zstandard as zstd # type: ignore
 import pandas as pd # type: ignore
-from tqdm import tqdm # type: ignore
 from rich.console import Console # type: ignore
 from rich.progress import track, Progress, BarColumn, TextColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn, TimeElapsedColumn, TaskProgressColumn # type: ignore
 from flask import current_app, g # type: ignore
@@ -205,7 +204,7 @@ def load_vndb_library(nodl_vndb):
                 db.execute (
                     'INSERT INTO vndblibrary (id, title_en, title_rm, image, description, steam_appid)'
                     ' VALUES (?, ?, ?, ?, ?, ?)',
-                    (id, title_en, title_rm, vn['image'], vn['description'], steam_appid)
+                    (id, title_en, title_rm, f'https://t.vndb.org/{vn["image"][:2]}/{vn["image"][-2:]}/{vn["image"][2:]}.jpg', vn['description'], steam_appid)
                 )
             except db.IntegrityError:
                 pass
