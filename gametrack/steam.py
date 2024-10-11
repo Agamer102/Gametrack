@@ -29,36 +29,38 @@ def load():
         try:
             response = requests.get(
                 f'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={g.steam_api_key}&steamid={steamid}&include_appinfo=true&format=json'
-            ).json()['response']
+            ).json()
+            print(response)
+            response = response['response']
         except requests.exceptions.JSONDecodeError:
             flash(7)
             pass
         else:
-            # print(response['games'])
-            for game in response['games']:
-                # print(game)
-                db = get_db()
-                
-                try:
-                    game_id = db.execute (
-                        'SELECT id FROM gamelibrary WHERE steam_appid = ?', (game['appid'],)
-                    ).fetchone()['id']
-                except TypeError:
-                    continue
-                # print(game_id)
-                try:
-                    db.execute(
-                        'INSERT INTO library (user_id, game_id, steam_sync, time)'
-                        ' VALUES (?, ?, ?, ?)',
-                        (g.user['id'], game_id, 1, game['playtime_forever'])
-                    )
-                except db.IntegrityError:
-                    db.execute(
-                        'UPDATE library SET time = ?'
-                        ' WHERE user_id = ? AND game_id = ? AND steam_sync = 1',
-                        (game['playtime_forever'], g.user['id'], game_id)
-                    )
+            if len(response) > 0:
+                for game in response['games']:
+                    # print(game)
+                    db = get_db()
+                    
+                    try:
+                        game_id = db.execute (
+                            'SELECT id FROM gamelibrary WHERE steam_appid = ?', (game['appid'],)
+                        ).fetchone()['id']
+                    except TypeError:
+                        continue
+                    # print(game_id)
+                    try:
+                        db.execute(
+                            'INSERT INTO library (user_id, game_id, steam_sync, time)'
+                            ' VALUES (?, ?, ?, ?)',
+                            (g.user['id'], game_id, 1, game['playtime_forever'])
+                        )
+                    except db.IntegrityError:
+                        db.execute(
+                            'UPDATE library SET time = ?'
+                            ' WHERE user_id = ? AND game_id = ? AND steam_sync = 1',
+                            (game['playtime_forever'], g.user['id'], game_id)
+                        )
 
-                db.commit()
+                    db.commit()
 
     return redirect(url_for('library.library'))
