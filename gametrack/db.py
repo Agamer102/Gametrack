@@ -51,6 +51,8 @@ def load_steamlibrary():
     except KeyError or TypeError:
         return 'Response was unable to be decoded.'
     
+    print('Applist of', len(applist))
+    
     db.execute('DROP TABLE IF EXISTS steamlibrary')
     db.execute(
         'CREATE TABLE steamlibrary ('

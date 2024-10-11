@@ -76,3 +76,11 @@ function updateFields() {
   document.getElementById('addGameFormDiv').style.display = selectedValue === '' ? 'none' : 'block';
 
 }
+
+function steamIDE(errorArray) {
+  if (errorArray.includes(7)) {
+    document.getElementById('userSteamID').classList.add('is-invalid')
+    document.getElementById('steamid_error').innerHTML = 'Invalid Steam ID'
+    document.getElementById('linkSteamNav').classList.add('text-danger')
+  }
+}

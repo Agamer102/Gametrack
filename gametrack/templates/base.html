@@ -20,9 +20,9 @@
               {% if g.user %}
                   <ul class="navbar-nav me-auto mt-2">
                       <li class="nav-item"><a class="nav-link" href="{{ url_for('library.library')}} ">Library</a></li>
-                      <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#addSteamID">Link Steam</a></li>
+                      <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#addSteamID" id="linkSteamNav">Link Steam</a></li>
                       <form class="d-flex" role="search" action="{{ url_for('library.search') }}">
-                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="q">
+                        <input class="form-control me-2" type="search" placeholder="Search for games" aria-label="Search" name="q">
                         <button class="btn btn-outline-success" type="submit">Search</button>
                       </form>                
                   </ul>
@@ -49,7 +49,8 @@
               <form id="linkSteamForm" method="post" action="{{ url_for('steam.load') }}">
                   <div class="mb-3" data-mdb-input-init>
                       <label class="col-form-label">ID:</label>
-                      <input type="number" class="form-control" name="id">
+                      <input type="number" class="form-control" name="id" id="userSteamID">
+                      <div class="invalid-feedback" id="steamid_error"></div>
                   </div>
               </form>
           </div>

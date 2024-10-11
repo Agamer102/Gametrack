@@ -9,6 +9,18 @@
 
 
 {% block content %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      let errorArray = [];
+      {% for message in get_flashed_messages() %}
+        errorArray.push({{ message | safe }});
+      {% endfor %}
+
+      if (errorArray.length != 0) {
+        steamIDE(errorArray);
+    }
+  })
+</script>
 {% if user_library %}
 <div class="row row-cols-1 row-cols-md-6 g-4">
   {% for entry in user_library %}

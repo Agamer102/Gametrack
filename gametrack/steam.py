@@ -26,33 +26,37 @@ def load():
         # print('POST request received')
         steamid = request.form['id']
         # print(f'Steam ID: {steamid}')
-        response = requests.get(
-            f'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={g.steam_api_key}&steamid={steamid}&include_appinfo=true&format=json'
-        ).json()['response']
-        # print('RESPONSE GOT')
-        if not response:
-            print('NO RESPONSE')
+        try:
+            response = requests.get(
+                f'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={g.steam_api_key}&steamid={steamid}&include_appinfo=true&format=json'
+            ).json()['response']
+        except requests.exceptions.JSONDecodeError:
+            flash(7)
+            pass
         else:
             # print(response['games'])
             for game in response['games']:
                 # print(game)
                 db = get_db()
-                # print(game['appid'])
-                game_id = db.execute (
-                    'SELECT id FROM gamelibrary WHERE steam_appid = ?', (game['appid'],)
-                ).fetchone()['id']
+                
+                try:
+                    game_id = db.execute (
+                        'SELECT id FROM gamelibrary WHERE steam_appid = ?', (game['appid'],)
+                    ).fetchone()['id']
+                except TypeError:
+                    continue
                 # print(game_id)
                 try:
                     db.execute(
                         'INSERT INTO library (user_id, game_id, steam_sync, time)'
                         ' VALUES (?, ?, ?, ?)',
-                        (g.user['id'], game_id, 1, game['playtime_forever'] + game['playtime_disconnected'])
+                        (g.user['id'], game_id, 1, game['playtime_forever'])
                     )
                 except db.IntegrityError:
                     db.execute(
                         'UPDATE library SET time = ?'
                         ' WHERE user_id = ? AND game_id = ? AND steam_sync = 1',
-                        (game['playtime_forever'] + game['playtime_disconnected'], g.user['id'], game_id)
+                        (game['playtime_forever'], g.user['id'], game_id)
                     )
 
                 db.commit()
