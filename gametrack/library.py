@@ -23,22 +23,34 @@ def library():
         (g.user['id'],)
     ).fetchall()
     user_library = list(map(dict, user_library))
+    # print(user_library)
+
+    custom_library = db.execute (
+        'SELECT * FROM library'
+        ' JOIN customlibrary ON library.game_id = customlibrary.id'
+        ' WHERE library.user_id = ?',
+        (g.user['id'],)
+    ).fetchall()
+    custom_library = list(map(dict, custom_library))
+    # print(custom_library)
+    user_library += custom_library
 
     for entry in user_library:
-        if entry['vndbid']:
-            entry['name'] = db.execute (
-                'SELECT title_rm FROM vndblibrary WHERE id = ?',
-                (entry['vndbid'],)
-            ).fetchone()['title_rm']
-            image = db.execute (
-                'SELECT image FROM vndblibrary WHERE id = ?',
-                (entry['vndbid'],)
-            ).fetchone()['image']
-        if entry['steam_appid']:
-            entry['name'] = db.execute (
-                'SELECT name FROM steamlibrary WHERE id = ?',
-                (entry['steam_appid'],)
-            ).fetchone()['name']
+        if entry['id'] < 499999:
+            if entry['vndbid']:
+                entry['name'] = db.execute (
+                    'SELECT title_rm FROM vndblibrary WHERE id = ?',
+                    (entry['vndbid'],)
+                ).fetchone()['title_rm']
+                entry['image_link'] = db.execute (
+                    'SELECT image_link FROM vndblibrary WHERE id = ?',
+                    (entry['vndbid'],)
+                ).fetchone()['image_link']
+            if entry['steam_appid']:
+                entry['name'] = db.execute (
+                    'SELECT name FROM steamlibrary WHERE id = ?',
+                    (entry['steam_appid'],)
+                ).fetchone()['name']
         # print(entry)
 
     return render_template('library/library.html', user_library=user_library)
@@ -89,8 +101,31 @@ def delete():
     return redirect(url_for('library.library'))
 
 
-@bp.route('/search')
+@bp.route('/search', methods=('GET', 'POST'))
 def search():
+    if request.method == 'POST':
+        user_id = g.user['id']
+        game_name = request.form['name']
+        game_image_link = request.form['image_link']
+
+        db = get_db()
+        db.execute (
+            'INSERT INTO customlibrary (name, image_link)'
+            ' VALUES (?, ?)',
+            (game_name, game_image_link)
+        )
+        game_id = db.execute(
+            'SELECT MAX(id) FROM customlibrary'
+        ).fetchone()['MAX(id)']
+        # print(game_id)
+        db.execute (
+            'INSERT INTO library (user_id, game_id)'
+            ' VALUES (?, ?)',
+            (user_id, game_id)
+        )
+        db.commit()
+        return redirect(url_for('library.library'))
+
     query = request.args['q']
 
     if len(query) < 4:
@@ -129,4 +164,4 @@ def search():
     results = list(map(dict, results))
     # print(results)
 
-    return render_template('library/update.html', results=results)
+    return render_template('library/search.html', results=results)

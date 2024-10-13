@@ -5,6 +5,39 @@
 {% endblock %}
 
 {% block content %}
+<div class="modal fade" id="addCustomGame" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            Add a custom game
+        </div>
+        <div class="modal-body">
+          <p>
+            For games not on Steam on VNDB, you can find them on a site like 
+            <a href="https://thegamesdb.net">thegamesdb.net</a>
+            Copy the name and cover image link, and use them here. 
+            The games you add will only be visible to you.
+            Please make sure the image link works and that the name is correct.
+          </p>
+            <form id="addCustomGameForm" method="post">
+                <div class="mb-3" data-mdb-input-init>
+                    <label class="col-form-label">Name:</label>
+                    <input type="text" class="form-control" name="name" id="name">
+                </div>
+                <div class="mb-3" data-mdb-input-init>
+                  <label class="col-form-label">Image Link:</label>
+                  <input type="text" class="form-control" name="image_link" id="imageLink">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" form="addCustomGameForm" class="btn btn-primary">Link</button>
+        </div>
+    </div>
+  </div>
+</div>
+
 <div class="card mb-3">
     {% for result in results %}
     {% if loop.index <= 20 %}

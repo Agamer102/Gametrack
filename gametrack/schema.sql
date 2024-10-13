@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS games;
 DROP TABLE IF EXISTS library;
+DROP TABLE IF EXISTS customlibrary;
 
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +21,14 @@ CREATE TABLE library (
   FOREIGN KEY (game_id) REFERENCES gamelibrary (id),
   UNIQUE (user_id, game_id)
 );
+
+CREATE TABLE customlibrary (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  image_link TEXT
+);
+
+INSERT INTO customlibrary ('id', 'name') VALUES (499999, 'COUNT_START_VALUE');
 /*
 
 For reference only
@@ -33,7 +42,7 @@ CREATE TABLE vndblibrary (
  id TEXT PRIMARY KEY,
  title_en TEXT,
  title_rm TEXT,
- image TEXT,
+ image_link TEXT,
  description TEXT,
  steam_appid INTEGER
 );
@@ -42,7 +51,8 @@ CREATE TABLE gamelibrary (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  steam_appid INTEGER,
  vndbid TEXT,
- UNIQUE (steam_appid, vndbid)
+ custom_id INTEGER,
+ UNIQUE (steam_appid, vndbid, custom_id),
 );
 
 */

@@ -174,7 +174,7 @@ def load_vndb_library(nodl_vndb):
             ' id TEXT PRIMARY KEY,'
             ' title_en TEXT,'
             ' title_rm TEXT,'
-            ' image TEXT,'
+            ' image_link TEXT,'
             ' description TEXT,'
             ' steam_appid INTEGER'
             ')'
@@ -204,7 +204,7 @@ def load_vndb_library(nodl_vndb):
             # print(id, title_en, title_rm, steam_appid)
             try:
                 db.execute (
-                    'INSERT INTO vndblibrary (id, title_en, title_rm, image, description, steam_appid)'
+                    'INSERT INTO vndblibrary (id, title_en, title_rm, image_link, description, steam_appid)'
                     ' VALUES (?, ?, ?, ?, ?, ?)',
                     (id, title_en, title_rm, f'https://t.vndb.org/{vn["image"][:2]}/{vn["image"][-2:]}/{vn["image"][2:]}.jpg', vn['description'], steam_appid)
                 )
@@ -230,7 +230,8 @@ def load_gamelibrary():
         ' id INTEGER PRIMARY KEY AUTOINCREMENT,'
         ' steam_appid INTEGER,'
         ' vndbid TEXT,'
-        ' UNIQUE (steam_appid, vndbid)'
+        ' custom_id INTEGER,'
+        ' UNIQUE (steam_appid, vndbid, custom_id)'
         ' )'
     )
 
