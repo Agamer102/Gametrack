@@ -256,6 +256,13 @@ def load_gamelibrary():
 def init_db_command(keep_users, keep_games, keep_steam, keep_vndb, nodl_vndb):
     """Clear the existing data and create new tables."""
 
+    # backup database
+    try:
+        db_path = current_app.config['DATABASE']
+        shutil.copyfile(db_path, db_path + '-backup')
+    except FileNotFoundError:
+        pass
+
     if keep_users != True:
         console.print('[bold blue]Initializing the database[/bold blue]')
         init_db()
